@@ -6,11 +6,6 @@ certifications, hobbies, and goals. TypeScript, React, and Vite,
 authenticated with [Clerk](https://clerk.com). Always scoped to your own
 account; there is no admin surface.
 
-For why things are built this way, and how the deployment infra fits
-together, see the design doc and build journal in the sibling `operations`
-repo: `operations/docs/projects/resume-app/design.md` and
-`operations/docs/projects/resume-app/journal.md`.
-
 ## Structure
 
 ```
@@ -55,14 +50,19 @@ hand-writing six near-identical list+form blocks.
 | `npm run build`            | Type-check + build to `./dist/`                |
 | `npm run preview`           | Preview the production build locally          |
 | `npm run lint`               | Lint (`oxlint`)                              |
-| `npm run generate:types`      | Regenerate `src/types/resume-api.ts` from the published OpenAPI spec |
+| `npm run generate:types`      | Regenerate `src/types/resume-api.ts` from resume-api's local OpenAPI spec (assumes `resume-api` is checked out as a sibling directory at `../resume-api`) |
 
 ## Local setup
 
-Copy `.env.example` to `.env.local` and set `VITE_CLERK_PUBLISHABLE_KEY` —
-same Clerk application (and `resume-api` JWT template) api-console already
-uses. See `operations/docs/runbooks/resume-api-deployment.md` for where
-that application lives.
+This app talks to a locally running `resume-api` — see that repo's README
+for how to start it (`./scripts/run-local.sh`), which serves on
+`http://localhost:8000` by default with CORS enabled for browser callers.
+
+Copy `.env.example` to `.env.local` and set `VITE_CLERK_PUBLISHABLE_KEY` to
+a publishable key for the same Clerk application/instance your local
+resume-api is verifying tokens against (its `CLERK_ISSUER_URL`), with a
+`resume-api` JWT template configured on it. `VITE_API_BASE_URL` only needs
+setting if resume-api isn't running on the default `http://localhost:8000`.
 
 ## Deployment
 
@@ -74,20 +74,18 @@ provisioned in `operations/infra/apps/resume-app`. Pull requests run
 `.github/workflows/ci.yml` (lint + type-check + build) without touching any
 deployment credentials.
 
-Required repo configuration — see
-`operations/docs/runbooks/resume-app-deployment.md` for how to get these
-values:
+Required repo configuration (`tofu output <name>` in
+`operations/infra/apps/resume-app` for the first two):
 
-| Name                         | Kind             | Value                                                                        |
-|:-----------------------------|:-----------------|:------------------------------------------------------------------------------|
-| `AWS_ROLE_ARN`               | Actions secret   | `tofu output github_deploy_role_arn` in `operations/infra/apps/resume-app`   |
-| `CLOUDFRONT_DISTRIBUTION_ID` | Actions variable | `tofu output cloudfront_distribution_id` in `operations/infra/apps/resume-app` |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Actions variable | Same value already used by api-console (not sensitive — shipped to the browser) |
+| Name                         | Kind             | Value                                                       |
+|:-----------------------------|:-----------------|:-------------------------------------------------------------|
+| `AWS_ROLE_ARN`               | Actions secret   | `tofu output github_deploy_role_arn`                        |
+| `CLOUDFRONT_DISTRIBUTION_ID` | Actions variable | `tofu output cloudfront_distribution_id`                    |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Actions variable | Same value as your local `.env.local` (not sensitive — shipped to the browser) |
 
-Live at [resume.peteshepley.com](https://resume.peteshepley.com) (once DNS
-is wired up — see the runbook).
+Live at [resume.peteshepley.com](https://resume.peteshepley.com) once DNS
+is configured.
 
 ## Out of scope (for now)
 
-PDF export of a user's resume. Being discussed separately — see the design
-doc's "Future work" section.
+PDF export of a user's resume.

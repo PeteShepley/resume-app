@@ -1,9 +1,8 @@
 /**
- * Thin fetch wrapper for resume-api. Mirrors the base-URL/token-attachment
- * logic api-console's App.tsx applies via Swagger's requestInterceptor,
- * minus Swagger.
+ * Thin fetch wrapper for resume-api: attaches a bearer token to every
+ * request and normalizes error responses.
  */
-const BASE_URL = 'https://resume.api.peteshepley.com'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
 export class ApiError extends Error {
   status: number

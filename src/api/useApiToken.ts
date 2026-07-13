@@ -1,8 +1,9 @@
 import { useAuth } from '@clerk/clerk-react'
 import { useCallback } from 'react'
 
-/** JWT template already configured in Clerk's dashboard for resume-api — see
- * api-console/src/apis.ts, which uses the same template against the same API. */
+/** Must exist as a JWT template in the Clerk dashboard for whichever Clerk
+ * application `VITE_CLERK_PUBLISHABLE_KEY` points at, and match resume-api's
+ * `CLERK_AUDIENCE` if it enforces one. */
 const CLERK_JWT_TEMPLATE = 'resume-api'
 
 /** Returns a function resolving a fresh bearer token for resume-api. Clerk
