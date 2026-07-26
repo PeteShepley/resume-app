@@ -70,12 +70,14 @@ Deploys via GitHub Actions on every push to `main` (`.github/workflows/deploy.ym
 build the app, sync `dist/` to the `peteshepley-resume-app-site` S3 bucket,
 invalidate CloudFront. Authentication is via GitHub OIDC (no stored AWS
 credentials) — the role, bucket, and CloudFront distribution are
-provisioned in `operations/infra/apps/resume-app`. Pull requests run
-`.github/workflows/ci.yml` (lint + type-check + build) without touching any
-deployment credentials.
+provisioned in [`infrastructure/`](infrastructure/), this repo's own
+OpenTofu stack (built on the shared
+[terraform-aws-static-app](https://github.com/PeteShepley/terraform-aws-static-app)
+module). Pull requests run `.github/workflows/ci.yml` (lint + type-check +
+build) without touching any deployment credentials.
 
 Required repo configuration (`tofu output <name>` in
-`operations/infra/apps/resume-app` for the first two):
+`infrastructure/` for the first two):
 
 | Name                         | Kind             | Value                                                       |
 |:-----------------------------|:-----------------|:-------------------------------------------------------------|
