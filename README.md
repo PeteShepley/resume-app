@@ -66,27 +66,26 @@ setting if resume-api isn't running on the default `http://localhost:8000`.
 
 ## Deployment
 
-Deploys via GitHub Actions on every push to `main` (`.github/workflows/deploy.yml`):
-build the app, sync `dist/` to the `peteshepley-resume-app-site` S3 bucket,
-invalidate CloudFront. Authentication is via GitHub OIDC (no stored AWS
-credentials) — the role, bucket, and CloudFront distribution are
-provisioned in [`infrastructure/`](infrastructure/), this repo's own
-OpenTofu stack (built on the shared
-[terraform-aws-static-app](https://github.com/PeteShepley/terraform-aws-static-app)
-module). Pull requests run `.github/workflows/ci.yml` (lint + type-check +
-build) without touching any deployment credentials.
+Every push to `main` runs `.github/workflows/release.yml`. It builds the app
+once per environment, because the API URL and Clerk publishable key are baked
+in at build time. Each build uses the `/resume/` base path. The workflow then
+publishes `dist-prod.tgz`, `dist-stage.tgz` and `manifest.json` as a GitHub
+Release tagged `v0.<run>`. It reads the Clerk publishable keys from SSM
+(`/clerk/<env>/public/publishable-key`) through the `gha-build-config-reader`
+OIDC role, which needs the repo variable `AWS_ACCOUNT_ID`. Pull requests run
+`.github/workflows/ci.yml` (lint, type-check and build).
 
-Required repo configuration (`tofu output <name>` in
-`infrastructure/` for the first two):
+This repo holds no infrastructure and does not deploy itself. The S3 prefix
+and its CloudFront routing live in the `operations` repo (stack
+`410-app-resume`), and a release is deployed from there:
 
-| Name                         | Kind             | Value                                                       |
-|:-----------------------------|:-----------------|:-------------------------------------------------------------|
-| `AWS_ROLE_ARN`               | Actions secret   | `tofu output github_deploy_role_arn`                        |
-| `CLOUDFRONT_DISTRIBUTION_ID` | Actions variable | `tofu output cloudfront_distribution_id`                    |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Actions variable | Same value as your local `.env.local` (not sensitive — shipped to the browser) |
+```sh
+scripts/deploy app resume stage v0.<run>
+scripts/deploy app resume prod  v0.<run>
+```
 
-Live at [resume.peteshepley.com](https://resume.peteshepley.com) once DNS
-is configured.
+Live at [app.peteshepley.com/resume](https://app.peteshepley.com/resume/)
+(staging: `app.stage.peteshepley.com/resume/`).
 
 ## Out of scope (for now)
 
